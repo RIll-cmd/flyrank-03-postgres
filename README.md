@@ -71,7 +71,9 @@ Run this command from the repository directory to display the tables and stored 
 docker compose exec -T db psql -U tasks -d tasks -c "\dt" -c "SELECT * FROM tasks ORDER BY id;"
 ```
 
-If you changed the example username or database, replace the two `tasks` arguments accordingly. The verification transcript includes actual `psql` output. A screenshot of this output is still required by the PDF; a text transcript alone does not meet that screenshot requirement.
+If you changed the example username or database, replace the two `tasks` arguments accordingly. The verification transcript includes actual `psql` output. The screenshot below shows this inspection against the existing local PostgreSQL container: both tables are listed, and the original persistence-verification task is present. Fresh-volume three-row seeding was verified separately, as recorded above.
+
+![PostgreSQL psql table listing and saved task](postgres-data.png)
 
 ## Tests
 
