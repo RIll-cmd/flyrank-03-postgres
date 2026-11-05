@@ -19,4 +19,6 @@ Missing or invalid input returns 400; unknown task IDs return 404.
 
 Copy `.env.example` to `.env`, then run `docker compose up --build`. PostgreSQL data is stored in the named `postgres_data` volume. The app and routes are identical to the SQLite assignment; only the repository is replaced, with deployment configuration and initialization added.
 
-To verify persistence: create a task, run `docker compose down`, run `docker compose up -d`, and retrieve the task with `GET /tasks`. Do not add `-v`, which removes the volume. This procedure has not yet been run: Docker's engine was unavailable during implementation.
+To verify persistence: create a task, run `docker compose down`, run `docker compose up -d`, and retrieve the task with `GET /tasks`. Do not add `-v`, which removes the volume.
+
+Verified on 2026-11-05 using Docker Desktop: `POST /tasks` returned 201 with `{"id":1,"title":"Persistence verification task","done":false}`. After `docker compose down` removed both app and database containers and `docker compose up -d` recreated them, `GET /tasks/1` returned 200 with the same row. The named PostgreSQL volume retained the data.
