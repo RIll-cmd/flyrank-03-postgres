@@ -1,0 +1,73 @@
+W3 PostgreSQL verification - 2026-11-05
+Local clean Git clone with .env copied from .env.example.
+Only verification override: host port 8007 instead of 8000, which is occupied by the existing project.
+Distinct compose project and named volume: flyrank-w3-check.
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false}]
+Clean clone build/start/seed completed in 8.6 seconds.
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false}]
+App container restart 1: exactly the original three examples.
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false}]
+App container restart 2: exactly the original three examples.
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false}]
+App container restart 3: exactly the original three examples.
+POST /tasks {"title": "Postgres full-stack persistence check"}
+HTTP 201 {"id":4,"title":"Postgres full-stack persistence check","done":false}
+PUT /tasks/4 {"done": true}
+HTTP 200 {"id":4,"title":"Postgres full-stack persistence check","done":true}
+GET /tasks/4
+HTTP 200 {"id":4,"title":"Postgres full-stack persistence check","done":true}
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false},{"id":4,"title":"Postgres full-stack persistence check","done":true}]
+GET /tasks/4
+HTTP 200 {"id":4,"title":"Postgres full-stack persistence check","done":true}
+Both app and db containers were removed and recreated; new container IDs confirmed. Updated task survived.
+REAL PSQL OUTPUT:
+$ docker compose exec -T db psql -U tasks -d tasks -c '\\dt'
+List of relations
+ Schema |      Name      | Type  | Owner 
+--------+----------------+-------+-------
+ public | initialization | table | tasks
+ public | tasks          | table | tasks
+(2 rows)
+$ docker compose exec -T db psql -U tasks -d tasks -c 'SELECT * FROM tasks ORDER BY id;'
+id |                 title                 | done 
+----+---------------------------------------+------
+  1 | Learn APIs                            | f
+  2 | Read a book                           | f
+  3 | Take a walk                           | f
+  4 | Postgres full-stack persistence check | t
+(4 rows)
+REAL CURL OUTPUT:
+$ curl.exe -i http://localhost:8007/tasks
+HTTP/1.1 200 OK
+date: Thu, 05 Nov 2026 07:04:27 GMT
+server: uvicorn
+content-length: 201
+content-type: application/json
+
+[{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false},{"id":4,"title":"Postgres full-stack persistence check","done":true}]
+DELETE /tasks/4
+HTTP 204 
+GET /tasks/4
+HTTP 404 {"error":"Task 4 not found"}
+PUT /tasks/4 {"done": false}
+HTTP 404 {"error":"Task 4 not found"}
+DELETE /tasks/4
+HTTP 404 {"error":"Task 4 not found"}
+POST /tasks {}
+HTTP 400 {"error":"A non-empty title is required"}
+POST /tasks {"title": ""}
+HTTP 400 {"error":"A non-empty title is required"}
+POST /tasks {"title": "   "}
+HTTP 400 {"error":"A non-empty title is required"}
+POST /tasks {"title": "ok", "extra": true}
+HTTP 400 {"error":"A non-empty title is required"}
+PUT /tasks/1 {"done": "yes"}
+HTTP 400 {"error":"Invalid task update"}
+GET /tasks
+HTTP 200 [{"id":1,"title":"Learn APIs","done":false},{"id":2,"title":"Read a book","done":false},{"id":3,"title":"Take a walk","done":false}]
+PASS: clean startup, seed-once, three app restarts, all CRUD routes, full-stack recreation persistence, invalid bodies and missing IDs.
